@@ -1,8 +1,8 @@
-import { Commands } from "../Plugins/Decorators";
-import IUtils from "../Plugins/Interfaces/IUtils.interface";
-import Plugin from "../Plugins/Plugin";
+import { Commands } from "../Decorators";
+import IUtils from "../Interfaces/IUtils.interface";
+import Plugin from "../Plugin";
 import fs from 'fs';
-import { SETTINGS_FOLDER } from '../Plugins/Consts';
+import { SETTINGS_FOLDER } from '../Consts';
 
 @Commands([
     "pull",

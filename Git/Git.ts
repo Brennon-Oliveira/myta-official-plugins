@@ -35,7 +35,6 @@ export default class Git extends Plugin{
             "{branch} - {type}: {message}",
         ];
         let defaultCommitTemplate = gitSettings? gitSettings["defaultCommitTemplate"] : "";
-        console.log(gitSettings)
         if(
             defaultCommitTemplate &&
             typeof defaultCommitTemplate === "string"

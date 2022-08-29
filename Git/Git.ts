@@ -1,12 +1,109 @@
 import { Commands } from "../Decorators";
 import IUtils from "../Interfaces/IUtils.interface";
 import Plugin from "../Plugin";
+import fs from 'fs';
+import { SETTINGS_FOLDER } from '../Consts';
 
 @Commands([
     "pull",
-    "commit"
+    "commit",
+    "configurate"
 ])
 export default class Git extends Plugin{
+
+    private gitSettings: string = SETTINGS_FOLDER + "/gitSettings.json";
+
+    async default(utils: IUtils){
+        if(!fs.existsSync(this.gitSettings)){
+            utils.clear();
+            utils.warning("Primeiro vamos configurar seu myta git");
+            await this.configurate(utils);
+        }
+    }
+
+    public async configurate(utils: IUtils){
+        if(fs.existsSync(this.gitSettings)){
+            fs.rmSync(this.gitSettings);
+        }
+        let finalEmail: string = "";
+        let finalName: string = "";
+        const settings = await utils.getSettings();
+        const typesOfPatterns = [
+            "{message}",
+            "{type}: {message}",
+            "{branch} - {type}: {message}",
+        ];
+        utils.message("Vamos iniciar a configuação do seu git");
+        let patternChoose = await utils.question(
+            "Primeiro, qual pattern de commit deseja utilizar?",
+            [
+                ...typesOfPatterns,      
+                "Criar pattern personalizado"
+            ],
+            true
+        )
+        if(!typesOfPatterns.includes(patternChoose)){
+            patternChoose = await utils.question(`
+                Para criar seu pattern personalizado, digite o padrão de commit que deseja.
+                "Os valores de 'mensagem', 'branch' e 'tipo' serão inseridos nas posições demarcadas com:
+                    {message}: Mensagem de commit
+                    {branch}: Branch do commit
+                    {type}: Tipo de commit`
+            );
+        }
+        const emailInGit = (await utils.exec("git config --global user.email"))
+        .stdout.replace(/\n/g, "");
+        const nameInGit = (await utils.exec("git config --global user.name"))
+        .stdout.replace(/\n/g, "");
+
+        if(emailInGit != settings['email']){
+            finalEmail = await utils.question(
+                "O email do git config e do myta config divergiram, qual escolher?",
+                [
+                    `Git: ${emailInGit}`,
+                    `Myta: ${settings['email']}`,
+                    "Inserir outro"
+                ],
+                true
+            );
+            if(finalEmail == "Inserir outro"){
+                finalEmail = await utils.question("Qual nome gostaria de usar?");
+            } else {
+                finalEmail = finalEmail.split(": ")[1];
+            }
+            await utils.exec(`git config --global user.email "${finalEmail}"`);
+        } else {
+            finalEmail = emailInGit;
+        }
+
+        if(nameInGit != settings['name']){
+            finalName = await utils.question(
+                "O nome de usuário do git config e do myta config divergiram, qual escolher?",
+                [
+                    `Git: ${nameInGit}`,
+                    `Myta: ${settings['email']}`,
+                    "Inserir outro"
+                ],
+                true
+            );
+            if(finalName == "Inserir outro"){
+                finalName = await utils.question("Qual nome gostaria de usar?");
+            } else {
+                finalName = finalName.split(": ")[1];
+            }
+            await utils.exec(`git config --global user.name "${finalName}"`);
+        } else {
+            finalName = nameInGit
+        }
+        
+        const finalGitSettings = {
+            "defaultCommitTemplate": patternChoose,
+            "name": finalName,
+            "email": finalEmail
+        }
+
+        fs.writeFileSync(this.gitSettings, JSON.stringify(finalGitSettings));
+    }
 
     async pull(utils: IUtils, args:Array<string>) {
         let {flags} = utils.getFlags(args, {boolFlags: ["s"]})
@@ -167,6 +264,10 @@ export default class Git extends Plugin{
 
     async help(utils: IUtils) {
         utils.help("myta git", [
+            {
+                name: "configurate",
+                description: "Inicia processo de configuração do git"
+            },
             {
                 name: "pull",
                 description: "Realiza git pull --rebase",

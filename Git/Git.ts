@@ -1,8 +1,8 @@
-import { Commands } from "../Decorators";
-import IUtils from "../Interfaces/IUtils.interface";
-import Plugin from "../Plugin";
+import { Commands } from "../../my-terminal-assistent/bin/Plugins/Decorators";
+import IUtils from "../../my-terminal-assistent/bin/Plugins/Interfaces/IUtils.interface";
+import Plugin from "../../my-terminal-assistent/bin/Plugins/Plugin";
 import fs from 'fs';
-import { SETTINGS_FOLDER } from '../Consts';
+import { SETTINGS_FOLDER } from '../../my-terminal-assistent/bin/Plugins/Consts';
 
 @Commands([
     "pull",
@@ -22,8 +22,9 @@ export default class Git extends Plugin{
     }
 
     public async configurate(utils: IUtils){
+        let gitSettings: {[key: string]: unknown} | undefined;
         if(fs.existsSync(this.gitSettings)){
-            fs.rmSync(this.gitSettings);
+            gitSettings = JSON.parse(fs.readFileSync(this.gitSettings).toString());
         }
         let finalEmail: string = "";
         let finalName: string = "";
@@ -33,6 +34,14 @@ export default class Git extends Plugin{
             "{type}: {message}",
             "{branch} - {type}: {message}",
         ];
+        let defaultCommitTemplate = gitSettings? gitSettings["defaultCommitTemplate"] : "";
+        console.log(gitSettings)
+        if(
+            defaultCommitTemplate &&
+            typeof defaultCommitTemplate === "string"
+        ){
+            typesOfPatterns.push(defaultCommitTemplate)
+        }
         utils.message("Vamos iniciar a configuação do seu git");
         let patternChoose = await utils.question(
             "Primeiro, qual pattern de commit deseja utilizar?",

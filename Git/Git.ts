@@ -41,7 +41,7 @@ export default class Git extends Plugin{
             typeof defaultCommitTemplate === "string"
         ){
             typesOfPatterns.push(defaultCommitTemplate)
-        }
+        } 
         utils.message("Vamos iniciar a configuação do seu git");
         let patternChoose = await utils.question(
             "Primeiro, qual pattern de commit deseja utilizar?",
@@ -214,11 +214,14 @@ export default class Git extends Plugin{
             type = <string>flags.t;
         }
 
-        commitMessage = utils.useTemplate(settings["defaultCommitTemplate"], {
-            branch: branch,
-            message: commitMessage,
-            type: type,
-        });
+        if(fs.existsSync(this.gitSettings)){
+            let gitSettings = JSON.parse(fs.readFileSync(this.gitSettings).toString());
+            commitMessage = utils.useTemplate(gitSettings["defaultCommitTemplate"], {
+                branch: branch,
+                message: commitMessage,
+                type: type,
+            });
+        }
 
         let commit = await utils.exec(`git commit -m "${commitMessage}"`);
 

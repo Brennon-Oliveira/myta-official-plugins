@@ -1,8 +1,8 @@
-import { Commands } from "../../my-terminal-assistent/bin/Plugins/Decorators";
-import IUtils from "../../my-terminal-assistent/bin/Plugins/Interfaces/IUtils.interface";
-import Plugin from "../../my-terminal-assistent/bin/Plugins/Plugin";
+import { Commands } from "../Plugins/Decorators";
+import IUtils from "../Plugins/Interfaces/IUtils.interface";
+import Plugin from "../Plugins/Plugin";
 import fs from 'fs';
-import { SETTINGS_FOLDER } from '../../my-terminal-assistent/bin/Plugins/Consts';
+import { SETTINGS_FOLDER } from '../Plugins/Consts';
 
 @Commands([
     "pull",

@@ -3,6 +3,7 @@ import IUtils from "../Interfaces/IUtils.interface";
 import Plugin from "../Plugin";
 import fs from 'fs';
 import { SETTINGS_FOLDER } from '../Consts';
+import ICommitFiles from "./interfaces/ICommitFiles.interface";
 
 @Commands([
     "pull",
@@ -170,6 +171,8 @@ export default class Git extends Plugin{
         );
         let settings = await utils.getSettings();
 
+        let filesStatus = await this.getStatus(utils);
+
         let branchs = await utils.exec("git branch");
         let branch =
             branchs.stdout
@@ -200,6 +203,10 @@ export default class Git extends Plugin{
         if (flags.a) {
             utils.message("Adicionando todos os arquivos")
             await utils.exec("git add .");
+        } else {
+            let addCommand = "git add";
+            filesStatus.filesReadyToCommit.forEach(file=>{addCommand+= ` ${file}`})
+            await utils.exec(addCommand);
         }
 
         let commitMessage = "Commit sem mensagem";
@@ -319,5 +326,59 @@ export default class Git extends Plugin{
                 ],
             },
         ]);
+    }
+
+    async getStatus(utils: IUtils): Promise<ICommitFiles>{
+        let filesToCommit: ICommitFiles = {
+            changesNotAdded: [],
+            newFileNotAdded: [],
+            filesReadyToCommit: []
+        };
+        const NEW_FILE_NOT_ADDED = "Untracked files:";
+        const CHANGES_NOT_ADDED = "Changes not staged for commit:";
+        const FILES_READY_TO_COMMIT = "Changes to be committed:";
+
+        let gitStatusResult = await utils.exec("git status");
+
+        if(gitStatusResult.stdout.includes(NEW_FILE_NOT_ADDED)){
+            let newFileNotAdded = this.breakFiles(gitStatusResult.stdout, NEW_FILE_NOT_ADDED);
+            filesToCommit.newFileNotAdded.push(...newFileNotAdded);
+        }
+
+        if(gitStatusResult.stdout.includes(CHANGES_NOT_ADDED)) {
+            let changesNotAdded = this.breakFiles(gitStatusResult.stdout, CHANGES_NOT_ADDED);
+            filesToCommit.changesNotAdded.push(...changesNotAdded);
+        }
+
+        if(gitStatusResult.stdout.includes(FILES_READY_TO_COMMIT)){
+            let filesReadyToCommit = this.breakFiles(gitStatusResult.stdout, FILES_READY_TO_COMMIT);
+            filesToCommit.filesReadyToCommit.push(...filesReadyToCommit);
+        }
+
+        return filesToCommit
+    }
+
+    breakFiles(originalString: string, splitString: string): Array<string>{
+        const REMOVE_PARENTHESES = /\((.*?)\)/g;
+        let noFmtFiles = originalString.split(splitString)[1];
+        noFmtFiles = noFmtFiles.split(":\n")[0].replace(REMOVE_PARENTHESES, "");
+        
+        let files = noFmtFiles.trim().split("\n");
+        let finalFiles: Array<string> = [];
+        if(noFmtFiles.includes(":")){
+            for(let file of files){
+                if(file == ""){
+                    break
+                }
+                if(file.includes(":")){
+                    finalFiles.push(file.split(":")[1].trim())
+                    continue;
+                }
+                finalFiles.push(file.trim());
+            }
+        } else {
+           finalFiles = files.map((file: string)=>file.trim())
+        }
+        return finalFiles
     }
 }

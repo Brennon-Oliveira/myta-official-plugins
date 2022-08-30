@@ -4,11 +4,13 @@ import Plugin from "../Plugin";
 import fs from 'fs';
 import { SETTINGS_FOLDER } from '../Consts';
 import ICommitFiles from "./interfaces/ICommitFiles.interface";
+import LockBranchs from './Commands/LockBranchs';
 
 @Commands([
     "pull",
     "commit",
-    "configurate"
+    "configurate",
+    "lockBranchs"
 ])
 export default class Git extends Plugin{
 
@@ -20,6 +22,11 @@ export default class Git extends Plugin{
             utils.warning("Primeiro vamos configurar seu myta git");
             await this.configurate(utils);
         }
+    }
+
+    public async lockBranchs(utils: IUtils, args: Array<string>){
+        const lockBranchs = new LockBranchs(utils, args);
+        await lockBranchs.trigger();
     }
 
     public async configurate(utils: IUtils){

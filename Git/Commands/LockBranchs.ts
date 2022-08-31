@@ -1,4 +1,4 @@
-import IUtils from "../../../my-terminal-assistent/bin/Plugins/Interfaces/IUtils.interface";
+import IUtils from "../../Interfaces/IUtils.interface";
 
 interface IBranch {
     branch: string,
@@ -45,24 +45,18 @@ export default class LockBranchs {
     }
 
     async selectBranchs(){
+        let key: string;
         let selected = 0;
         let choosing = true;
         let message = ""; 
+        let CAAA = "";
         
-        let teste = process.stdin.read(15);
-        console.log("Oi")
-        // while(choosing){
-        //     message = ""
-        //     this.branchs.forEach((branch, index)=>{
-        //         if(index == selected){
-        //             message += "> "
-        //         }
-        //         message += branch.branch + "\n"
-        //     })
-        //     console.clear()
-        //     process.stdout.write(message);
-        //     await this.delay(1)
-        // }
+        console.clear()
+        while(key = await this.getKeypress()){
+            console.clear()
+            console.log("key: " + key)
+        }
+
         
         
     }
@@ -78,5 +72,17 @@ export default class LockBranchs {
             }, seconds)
         })
     }
+
+    async getKeypress(): Promise<string> {
+        return new Promise(resolve => {
+          let stdin = process.stdin
+          stdin.setRawMode(true)
+          stdin.resume()
+          stdin.once('data', (buffer: Buffer)=>{
+            stdin.setRawMode(false)
+            resolve(buffer.toString())
+          })
+        })
+      }
 
 }
